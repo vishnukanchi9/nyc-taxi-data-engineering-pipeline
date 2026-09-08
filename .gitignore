@@ -4,9 +4,6 @@
 airflow_settings.yaml
 webserver_config.py
 
-# --- Personal project notes (contains resume/job-search context) ---
-CLAUDE.md
-
 # --- Source data: 60MB+ per monthly parquet, re-downloadable by the DAG ---
 include/*.parquet
 
