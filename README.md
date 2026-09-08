@@ -38,7 +38,7 @@ NYC TLC (public parquet files)
    - **Marts** (`fct_trips`): an **incremental** model that filters out known data quality issues (negative fares, out-of-range dates) and appends only new data on each run, enabling safe monthly backfill without duplication
    - **Aggregates**: `agg_trips_by_day` and `agg_revenue_by_zone`, the latter joining a dbt seed (`taxi_zone_lookup`) to convert location IDs into readable zone names
 
-**4. Test** — 5 dbt tests run automatically after each build: not-null checks, accepted-value checks, and a custom test flagging negative fares (set to warn, not error, since it documents a known, intentionally-handled condition rather than a pipeline bug).
+**4. Test** — 26 dbt tests run automatically after each build, covering the staging view and every marts model: not-null and accepted-value checks on key columns, referential integrity from `fct_trips` pickup/dropoff location IDs to the `taxi_zone_lookup` seed (the join `agg_revenue_by_zone` depends on), a uniqueness check asserting `agg_trips_by_day`'s daily grain, and singular tests asserting the data quality filters in `fct_trips` actually hold — no negative fares and no out-of-range pickup dates reach the mart. Tests that document known, intentionally-handled source conditions are set to warn rather than error: negative fares in staging, exact-duplicate trips (which make the missing surrogate key observable rather than latent), and the small number of TLC rows with dropoff before pickup.
 
 **5. Schedule** — Runs monthly (`@monthly`), with `catchup=True` enabling automatic backfill of historical months.
 
