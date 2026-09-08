@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw
+    database: nyc_taxi
+    schema: raw
+    tables:
+      - name: yellow_tripdata
+        description: "Raw NYC Yellow Taxi trip records, loaded as-is from monthly parquet files via Airflow."
