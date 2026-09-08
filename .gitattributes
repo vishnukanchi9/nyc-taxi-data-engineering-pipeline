@@ -1,0 +1,8 @@
+# Normalize all text to LF in the repository, regardless of the checkout platform.
+# The original web-uploaded files landed as CRLF while later commits used LF,
+# which made otherwise-identical files appear to differ.
+* text=auto eol=lf
+
+# Explicitly binary: never line-ending converted, never diffed as text.
+*.png     binary
+*.parquet binary
