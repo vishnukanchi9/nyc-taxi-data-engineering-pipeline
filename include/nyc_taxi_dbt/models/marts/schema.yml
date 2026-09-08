@@ -1,0 +1,94 @@
+version: 2
+
+models:
+  - name: fct_trips
+    description: >
+      Trip-grain fact table. Materialized incrementally: each run appends only trips
+      whose pickup_datetime is later than the current maximum already in the table,
+      which is what makes the monthly backfill safe to re-run without duplicating
+      prior months. Known data quality issues are filtered here rather than in
+      staging, so raw and staging remain a faithful copy of the source.
+    columns:
+      - name: vendor_id
+        description: "Code indicating the TPEP provider."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 6, 7]
+      - name: pickup_datetime
+        description: >
+          Timestamp the meter was engaged. Doubles as the incremental watermark.
+          Bounded to >= 2020-01-01 and <= current_timestamp() to drop the handful
+          of records per month carrying corrupted pickup dates (e.g. stamped 2002).
+        tests:
+          - not_null
+      - name: dropoff_datetime
+        description: "Timestamp the meter was disengaged."
+        tests:
+          - not_null
+      - name: total_amount
+        description: >
+          Total amount charged. Guaranteed non-negative in this model; the ~1.2% of
+          raw trips carrying negative totals (refunds/corrections) are excluded.
+        tests:
+          - not_null
+      - name: pickup_location_id
+        description: "TLC taxi zone where the trip began. Joins to the taxi_zone_lookup seed."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('taxi_zone_lookup')
+                field: locationid
+      - name: dropoff_location_id
+        description: "TLC taxi zone where the trip ended."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('taxi_zone_lookup')
+                field: locationid
+
+  - name: agg_trips_by_day
+    description: "Daily trip volume and revenue rollup built on fct_trips. Grain: one row per calendar day."
+    columns:
+      - name: trip_date
+        description: "Calendar day of pickup. Primary key of this model."
+        tests:
+          - not_null
+          - unique
+      - name: total_trips
+        description: "Count of trips with a pickup on this day."
+        tests:
+          - not_null
+      - name: total_revenue
+        description: "Sum of total_amount for trips picked up on this day."
+        tests:
+          - not_null
+
+  - name: agg_revenue_by_zone
+    description: >
+      Revenue and trip volume by pickup zone, joining fct_trips to the taxi_zone_lookup
+      seed. Grain: one row per (pickup_zone, borough).
+    columns:
+      - name: pickup_zone
+        description: >
+          Human-readable TLC zone name. A null here means a pickup_location_id in
+          fct_trips had no match in the taxi_zone_lookup seed, i.e. the seed has
+          drifted from the location IDs TLC is publishing. Warns rather than errors
+          so a seed refresh is surfaced without failing the pipeline.
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: borough
+        description: "NYC borough containing the pickup zone."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: total_trips
+        description: "Count of trips originating in this zone."
+        tests:
+          - not_null
