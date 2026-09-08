@@ -19,7 +19,7 @@ NYC TLC (public parquet files)
         ▼
    Snowflake (staging + marts schemas)
 ```
-![Lineage Graph](Lineage_Graph.png)
+![Lineage Graph](dbt-dag.png)
 
 ## Tech Stack
 - **Orchestration**: Apache Airflow (via Astronomer's Astro CLI, running in Docker)
