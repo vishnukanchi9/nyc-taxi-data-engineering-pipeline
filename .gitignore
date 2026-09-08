@@ -1,0 +1,38 @@
+# --- Secrets / local config (NEVER commit: repo is public) ---
+.env
+.env.*
+airflow_settings.yaml
+webserver_config.py
+
+# --- Personal project notes (contains resume/job-search context) ---
+CLAUDE.md
+
+# --- Source data: 60MB+ per monthly parquet, re-downloadable by the DAG ---
+include/*.parquet
+
+# --- Airflow runtime ---
+logs/
+airflow-webserver.pid
+airflow.cfg
+airflow.db
+__pycache__/
+*.pyc
+
+# --- dbt build artifacts (both the project and the Cosmos copy) ---
+**/target/
+**/dbt_packages/
+**/logs/
+
+# --- Astro CLI local state ---
+astro
+.venv/
+.astro/standalone/
+.astro/worktrees/
+.astro/*.local.yml
+.astro/*.local.yaml
+**/.astro/dbt_metadata.json
+**/.astro/manifest.slim.json
+
+# --- OS ---
+.DS_Store
+Thumbs.db
